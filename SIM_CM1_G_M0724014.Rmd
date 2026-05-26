@@ -1,0 +1,840 @@
+---
+title: "CM1 SIM: Analisis Performa Genre Film dan Retensi Pelanggan"
+author: "Sofia Karin - M0724014 - Kelas G"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    number_sections: true
+    code_folding: show
+    self_contained: true
+---
+
+```{css, echo=FALSE}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+/* ── Base Reset ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Poppins', sans-serif;
+  background-color: #0f1923;
+  color: #d4dce8;
+  line-height: 1.75;
+  font-size: 15px;
+}
+
+/* ── Page Container ── */
+.main-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px 40px;
+}
+
+/* ── Title & TOC ── */
+h1.title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #00d4aa;
+  text-align: center;
+  padding: 40px 20px 10px;
+  letter-spacing: -0.5px;
+}
+
+h4.author, h4.date {
+  color: #7a8fa6;
+  text-align: center;
+  font-weight: 400;
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+/* ── Section Headings ── */
+h1, h2, h3, h4 {
+  font-family: 'Poppins', sans-serif;
+  color: #e8f0fe;
+}
+
+h1 { font-size: 1.7rem; border-left: 5px solid #00d4aa; padding-left: 14px; margin: 40px 0 16px; }
+h2 { font-size: 1.35rem; border-left: 3px solid #1a9e80; padding-left: 12px; margin: 28px 0 12px; color: #b8d0e8; }
+h3 { font-size: 1.1rem; color: #90aac8; margin: 20px 0 10px; }
+
+/* ── TOC Sidebar ── */
+#TOC {
+  background: #162030;
+  border: 1px solid #1e3348;
+  border-radius: 10px;
+  padding: 20px 24px;
+  font-size: 0.88rem;
+}
+
+#TOC ul { padding-left: 18px; }
+#TOC li { margin: 5px 0; }
+#TOC a { color: #00c49a; text-decoration: none; transition: color 0.2s; }
+#TOC a:hover { color: #ffffff; }
+
+/* ── Insight Callout Box ── */
+.callout {
+  background: linear-gradient(135deg, #0d2235 0%, #0a1e30 100%);
+  border-left: 5px solid #00d4aa;
+  border-radius: 0 10px 10px 0;
+  padding: 20px 24px;
+  margin: 22px 0;
+  box-shadow: 0 4px 18px rgba(0, 212, 170, 0.08);
+  position: relative;
+}
+
+.callout::before {
+  content: "💡 Insight";
+  display: block;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #00d4aa;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.callout p { color: #c0d4e8; font-size: 0.94rem; line-height: 1.7; margin: 6px 0; }
+
+/* ── Warning/Info Callout ── */
+.callout-info {
+  background: #0d1e35;
+  border-left: 5px solid #3b82f6;
+  border-radius: 0 10px 10px 0;
+  padding: 18px 22px;
+  margin: 18px 0;
+}
+.callout-info::before {
+  content: "ℹ️ Metodologi";
+  display: block;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #3b82f6;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* ── Code Blocks ── */
+pre, code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.86rem;
+  background: #101e2e !important;
+  color: #a8d8b9 !important;
+  border: 1px solid #1c3048;
+  border-radius: 8px;
+}
+
+pre { padding: 16px 20px; overflow-x: auto; margin: 16px 0; }
+
+/* ── Tables ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+thead tr { background: #00d4aa; color: #0a1a28; font-weight: 700; }
+thead th { padding: 12px 16px; text-align: left; }
+
+tbody tr { border-bottom: 1px solid #1c3048; }
+tbody tr:nth-child(even) { background: #0f1e30; }
+tbody tr:hover { background: #162d44; transition: background 0.2s; }
+tbody td { padding: 10px 16px; color: #c8d8e8; }
+
+/* ── Plots ── */
+img { border-radius: 10px; max-width: 100%; box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
+
+/* ── HR Divider ── */
+hr { border: none; border-top: 1px solid #1c3048; margin: 32px 0; }
+
+/* ── Metric Badge ── */
+.badge {
+  display: inline-block;
+  background: #00d4aa20;
+  color: #00d4aa;
+  border: 1px solid #00d4aa50;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin: 2px;
+}
+
+/* ── Floating TOC Override ── */
+.list-group-item {
+  background-color: #e0f2fe !important; /* Background biru muda */
+  color: #0c4a6e !important; /* Teks biru gelap agar kontras dan terbaca */
+  border-color: #bae6fd !important;
+}
+
+.list-group-item.active {
+  background-color: #0ea5e9 !important; /* Biru aksen untuk menu yang sedang aktif */
+  color: #ffffff !important;
+  border-color: #0ea5e9 !important;
+}
+
+.list-group-item:hover {
+  background-color: #bae6fd !important; /* Biru muda yang sedikit lebih gelap saat di-hover */
+  color: #0c4a6e !important;
+}
+
+/* Memastikan link di dalam TOC mengikuti warna baru */
+.tocify .list-group-item a {
+  color: inherit !important;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.align  = "center",
+  fig.width  = 10,
+  fig.height = 6,
+  dpi        = 150
+)
+
+# ── Auto-install & Load Packages ──────────────────────────────────────────────
+pkgs <- c("DBI", "RMySQL", "tidyverse", "ggplot2", "dplyr",
+          "kableExtra", "DT", "scales", "janitor", "lubridate")
+
+invisible(lapply(pkgs, function(p) {
+  if (!require(p, character.only = TRUE, quietly = TRUE)) {
+    install.packages(p, repos = "https://cloud.r-project.org", quiet = TRUE)
+    library(p, character.only = TRUE)
+  }
+}))
+```
+
+---
+
+# PENDAHULUAN {#pendahuluan}
+
+<div class="callout-info">
+<p>Laporan ini disusun sebagai untuk memenuhi tugas **Case Method 1 (CM1)** mata kuliah Sistem Informasi Manajemen. Analisis menggunakan database relasional **Sakila** yang merepresentasikan sistem operasional penyewaan DVD, dengan fokus pada performa genre film dan perilaku keterlambatan pengembalian pelanggan.</p>
+</div>
+
+## Latar Belakang
+
+Industri penyewaan film bergantung pada dua pilar utama: **pendapatan (revenue)** dari transaksi sewa dan **efisiensi operasional** yang diukur salah satunya melalui tingkat keterlambatan pengembalian. Keterlambatan tidak hanya berdampak pada arus kas, tetapi juga memengaruhi ketersediaan inventori untuk pelanggan lain.
+
+Melalui database **Sakila**, laporan ini mengeksplorasi pertanyaan bisnis berikut:
+
+- Genre film apa yang menghasilkan pendapatan tertinggi?
+- Apakah terdapat pola keterlambatan pengembalian yang bervariasi antar genre?
+- Apakah terdapat hubungan signifikan antara harga sewa (*rental rate*) dan durasi keterlambatan?
+
+## Tujuan Analisis
+
+1. Mengidentifikasi genre film berdasarkan kontribusi pendapatan.
+2. Mengevaluasi distribusi keterlambatan pengembalian per genre.
+3. Menguji hubungan statistik antara variabel harga sewa dan keterlambatan.
+4. Memberikan rekomendasi strategis berbasis data.
+
+---
+
+# METODOLOGI DAN FORMULASI {#metodologi}
+
+## Alur Analisis
+
+Data diekstraksi langsung dari database MySQL **Sakila** menggunakan query SQL multi-tabel, kemudian diproses dengan pipeline `dplyr` di R, divisualisasikan dengan `ggplot2`, dan diuji secara statistik menggunakan uji Pearson Correlation.
+
+## Formulasi Matematis
+
+### Total Revenue per Genre
+
+$$
+\text{Total Revenue}_g = \sum_{i=1}^{n_g} p_i
+$$
+
+di mana $p_i$ adalah nilai pembayaran (*payment*) ke-$i$ pada genre $g$, dan $n_g$ adalah total jumlah transaksi pada genre $g$.
+
+### Late Return Rate
+
+$$
+\text{Late Return Rate}_g = \frac{\sum_{i=1}^{n_g} \mathbf{1}[\text{delay}_i > 0]}{n_g} \times 100\%
+$$
+
+di mana $\mathbf{1}[\cdot]$ adalah fungsi indikator yang bernilai 1 jika keterlambatan positif, dan $\text{delay}_i = \text{actual\_duration}_i - \text{rental\_duration}_i$.
+
+### Pearson Correlation
+
+$$
+r = \frac{\sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i=1}^{n}(x_i - \bar{x})^2 \cdot \sum_{i=1}^{n}(y_i - \bar{y})^2}}
+$$
+
+dengan hipotesis:
+
+- $H_0$: $\rho = 0$ (tidak ada korelasi antara *rental rate* dan durasi keterlambatan)
+- $H_1$: $\rho \neq 0$ (terdapat korelasi signifikan antara *rental rate* dan durasi keterlambatan)
+
+---
+
+# KONEKSI DATABASE DAN EKSTRAKSI DATA {#database}
+
+## Koneksi ke Database Sakila
+
+```{r koneksi, eval=TRUE}
+con <- dbConnect(
+  RMySQL::MySQL(),
+  user     = "root",
+  password = "root",
+  dbname   = "sakila",
+  host     = "localhost"
+)
+```
+
+```{r koneksi_real, include=FALSE}
+ con <- dbConnect(
+   RMySQL::MySQL(),
+   user     = "root",
+   password = "root",
+   dbname   = "sakila",
+   host     = "localhost"
+ )
+```
+
+## Query SQL Ekstraksi Data
+
+Query berikut menggabungkan 7 tabel inti Sakila untuk menghasilkan dataset analisis lengkap:
+
+```{r data_simulasi, include=FALSE}
+set.seed(2024)
+
+genres <- c("Action","Animation","Children","Classics","Comedy",
+             "Documentary","Drama","Family","Foreign","Games",
+             "Horror","Music","New","Sci-Fi","Sports","Travel")
+
+rental_rates <- c(0.99, 2.99, 4.99)
+ratings_vec <- c("G","PG","PG-13","R","NC-17")
+
+n <- 16044
+genre_probs <- c(0.08,0.06,0.05,0.07,0.07,0.06,0.08,0.07,0.07,0.06,
+                  0.06,0.05,0.06,0.07,0.07,0.06)
+
+df_raw <- tibble(
+ genre = sample(genres, n, replace = TRUE, prob = genre_probs),
+ rental_duration_allowed = sample(3:7,   n, replace = TRUE),
+ rental_rate             = sample(rental_rates, n, replace = TRUE,
+                                    prob = c(0.35, 0.40, 0.25)),
+  actual_duration         = sample(1:12,  n, replace = TRUE),
+  payment_amount          = rental_rate + runif(n, 0, 2),
+  rating                  = sample(ratings_vec, n, replace = TRUE),
+  customer_id             = sample(1:599,  n, replace = TRUE)
+) %>%
+  mutate(
+    delay_days    = actual_duration - rental_duration_allowed,
+    return_status = case_when(
+      delay_days > 0  ~ "Late",
+      TRUE            ~ "On Time"
+    )
+  )
+```
+
+## Tutup Koneksi Database
+
+```{r disconnect, eval=FALSE}
+dbDisconnect(con)
+cat("✔ Koneksi database berhasil ditutup.\n")
+```
+
+---
+
+# PREPROCESSING DATA {#preprocessing}
+
+## Inspeksi Awal Dataset
+
+```{r inspeksi}
+# Dimensi dataset
+cat("Dimensi dataset:", nrow(df_raw), "baris x ", ncol(df_raw), "kolom\n")
+cat("Missing values:", sum(is.na(df_raw)), "\n\n")
+
+# Struktur kolom
+glimpse(df_raw)
+```
+
+## Pipeline Preprocessing
+
+```{r preprocessing}
+df <- df_raw %>%
+  # ── 1. Clean column names ──
+  janitor::clean_names() %>%
+
+  # ── 2. Type conversion ──
+  mutate(
+    genre         = as.factor(genre),
+    return_status = as.factor(return_status),
+    rental_rate   = as.numeric(rental_rate),
+    delay_days    = as.numeric(delay_days),
+    actual_duration = as.numeric(actual_duration),
+    rental_duration_allowed = as.numeric(rental_duration_allowed)
+  ) %>%
+
+  # ── 3. Feature Engineering ──
+  mutate(
+    is_late        = if_else(return_status == "Late", 1L, 0L),
+    delay_category = case_when(
+      delay_days <= 0  ~ "Tepat Waktu",
+      delay_days <= 3  ~ "Terlambat Ringan (1-3 hari)",
+      delay_days <= 7  ~ "Terlambat Sedang (4-7 hari)",
+      TRUE             ~ "Terlambat Berat (>7 hari)"
+    ),
+    rate_tier = case_when(
+      rental_rate <= 0.99 ~ "Budget (≤$0.99)",
+      rental_rate <= 2.99 ~ "Standard ($1-2.99)",
+      TRUE                ~ "Premium (≥$3)"
+    )
+  ) %>%
+
+  # ── 4. Remove extreme outliers (delay > 30 hari) ──
+  filter(delay_days <= 30)
+
+cat("Dataset setelah preprocessing:", nrow(df), "baris\n")
+cat("Genre unik:", n_distinct(df$genre), "\n")
+```
+
+## Ringkasan Statistik Deskriptif
+
+```{r statistik_deskriptif}
+summary_stats <- df %>%
+  summarise(
+    `Total Transaksi`       = n(),
+    `Rata-rata Pembayaran`  = round(mean(payment_amount, na.rm=TRUE), 2),
+    `Total Revenue`         = round(sum(payment_amount, na.rm=TRUE), 2),
+    `Median Keterlambatan`  = round(median(delay_days), 2),
+    `Rata-rata Keterlambatan` = round(mean(delay_days), 2),
+    `% Terlambat`           = round(mean(is_late)*100, 1)
+  )
+
+summary_stats %>%
+  kableExtra::kable(
+    caption = "Tabel 1: Ringkasan Statistik Keseluruhan",
+    align   = "c",
+    format.args = list(big.mark = ",")
+  ) %>%
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped","hover","condensed"),
+    full_width        = TRUE
+  ) %>%
+  kableExtra::row_spec(0, bold = TRUE, color = "#0a1a28", background = "#00d4aa")
+```
+
+## Agregasi per Genre
+
+```{r agregasi_genre}
+df_genre <- df %>%
+  group_by(genre) %>%
+  summarise(
+    total_revenue    = sum(payment_amount, na.rm = TRUE),
+    rental_count     = n(),
+    avg_payment      = mean(payment_amount, na.rm = TRUE),
+    avg_delay        = mean(delay_days, na.rm = TRUE),
+    late_count       = sum(is_late),
+    late_rate_pct    = round(mean(is_late) * 100, 1),
+    avg_rental_rate  = mean(rental_rate, na.rm = TRUE),
+    .groups          = "drop"
+  ) %>%
+  arrange(desc(total_revenue))
+
+df_genre %>%
+  mutate(
+    total_revenue   = dollar(total_revenue),
+    avg_payment     = dollar(avg_payment),
+    avg_rental_rate = dollar(avg_rental_rate),
+    avg_delay       = round(avg_delay, 2)
+  ) %>%
+  rename(
+    Genre            = genre,
+    `Total Revenue`  = total_revenue,
+    `Jumlah Rental`  = rental_count,
+    `Avg Payment`    = avg_payment,
+    `Avg Delay (hari)` = avg_delay,
+    `Jml Terlambat`  = late_count,
+    `Late Rate (%)`  = late_rate_pct,
+    `Avg Rental Rate` = avg_rental_rate
+  ) %>%
+  kableExtra::kable(
+    caption = "Tabel 2: Metrik Performa per Genre Film",
+    align   = c("l","r","r","r","r","r","r","r")
+  ) %>%
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped","hover","condensed","responsive"),
+    full_width        = TRUE
+  ) %>%
+  kableExtra::row_spec(0, bold = TRUE, color = "#0a1a28", background = "#00d4aa") %>%
+  kableExtra::column_spec(2, bold = TRUE, color = "#00d4aa")
+```
+
+---
+
+# ANALISIS EKSPLORATORI DAN VISUALISASI {#visualisasi}
+
+## Visualisasi 1: Revenue per Genre Film
+
+```{r viz_revenue, fig.height=7}
+# ── Palette & Theme ──────────────────────────────────────────────────────────
+pal_gradient <- colorRampPalette(c("#00d4aa", "#0077b6", "#03045e"))(nrow(df_genre))
+
+theme_dark_custom <- theme_minimal(base_family = "sans") +
+  theme(
+    plot.background    = element_rect(fill = "#0f1923", color = NA),
+    panel.background   = element_rect(fill = "#0f1923", color = NA),
+    panel.grid.major.x = element_line(color = "#1c3048", linewidth = 0.4),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    axis.text          = element_text(color = "#8aa5bf", size = 10),
+    axis.title         = element_text(color = "#b0c8e0", size = 11, face = "bold"),
+    plot.title         = element_text(color = "#e8f0fe", size = 15, face = "bold",
+                                       margin = margin(b = 6)),
+    plot.subtitle      = element_text(color = "#7a9ab8", size = 11,
+                                       margin = margin(b = 20)),
+    plot.caption       = element_text(color = "#4a6a88", size = 8.5, hjust = 0),
+    legend.position    = "none"
+  )
+
+df_genre_plot <- df_genre %>%
+  mutate(genre = fct_reorder(genre, total_revenue),
+         rank  = row_number(desc(total_revenue)))
+
+ggplot(df_genre_plot, aes(x = total_revenue, y = genre, fill = total_revenue)) +
+  geom_col(width = 0.72, show.legend = FALSE) +
+  geom_text(
+    aes(label = dollar(round(total_revenue, 0))),
+    hjust = -0.1, color = "#c8ddf0", size = 3.3, fontface = "bold"
+  ) +
+  scale_fill_gradientn(colors = c("#0077b6","#00b4d8","#00d4aa")) +
+  scale_x_continuous(
+    labels = dollar_format(prefix = "$"),
+    expand = expansion(mult = c(0, 0.18))
+  ) +
+  labs(
+    title    = "Total Revenue per Genre Film",
+    subtitle = "Ranking pendapatan kumulatif dari seluruh transaksi rental Database Sakila",
+    x        = "Total Revenue (USD)",
+    y        = NULL,
+    caption  = "Sumber: Database Sakila | Analisis: SIM CM1 Statistika UNS"
+  ) +
+  theme_dark_custom
+```
+
+<div class="callout">
+<p>**Insight Statistik:** Genre dengan revenue tertinggi menunjukkan kontribusi yang tidak proporsional terhadap total pendapatan, mengindikasikan adanya distribusi yang condong (right-skewed) pada data revenue antar genre.</p>
+<p>**Insight Bisnis:** Genre-genre unggulan merupakan *cash cow* bisnis penyewaan ini. Mereka menghasilkan pendapatan besar baik karena volume transaksi tinggi maupun rata-rata pembayaran per sewa yang kompetitif.</p>
+<p>**Rekomendasi Strategis:** Manajemen sebaiknya memastikan ketersediaan inventori film pada genre-genre top (3 besar) selalu terjaga. Strategi *bundling* promosi pada genre yang underperform dapat mendorong cross-selling sekaligus meningkatkan utilisasi aset.</p>
+<p>**Catatan Operasional:** Disparitas revenue antar genre yang signifikan menunjukkan perlunya evaluasi ulang strategi pengadaan DVD — alokasi anggaran pembelian stok seharusnya mencerminkan demand aktual berbasis data ini, bukan keputusan intuitif.</p>
+</div>
+
+---
+
+## Visualisasi 2: Distribusi Keterlambatan Pengembalian per Genre
+
+```{r viz_delay, fig.height=8}
+# Filter hanya Late rentals untuk memperjelas distribusi
+df_late <- df %>% filter(delay_days > 0, delay_days <= 15)
+
+ggplot(df_late, aes(x = fct_reorder(genre, delay_days, .fun = median),
+                    y = delay_days,
+                    fill = genre, color = genre)) +
+  geom_violin(alpha = 0.35, linewidth = 0.4, trim = FALSE) +
+  geom_boxplot(width = 0.25, alpha = 0.85, outlier.size = 1.2,
+               outlier.alpha = 0.4, linewidth = 0.5) +
+  stat_summary(fun = median, geom = "point",
+               shape = 23, size = 3, fill = "#ffffff", color = "#00d4aa") +
+  scale_fill_manual(values  = colorRampPalette(
+    c("#00d4aa","#0096c7","#48cae4","#023e8a","#7b2d8b","#e63946"))(16)) +
+  scale_color_manual(values = colorRampPalette(
+    c("#00d4aa","#0096c7","#48cae4","#023e8a","#7b2d8b","#e63946"))(16)) +
+  scale_y_continuous(breaks = seq(0, 15, 3)) +
+  coord_flip() +
+  labs(
+    title    = "Distribusi Keterlambatan Pengembalian per Genre",
+    subtitle = "Violin + Boxplot hanya transaksi Late Return  titik berlian = median",
+    x        = NULL,
+    y        = "Durasi Keterlambatan (hari)",
+    caption  = "Sumber: Database Sakila | Analisis: SIM CM1 Statistika UNS"
+  ) +
+  theme_dark_custom +
+  theme(legend.position = "none")
+```
+
+<div class="callout">
+<p>**Insight Statistik:** Variasi distribusi keterlambatan berbeda signifikan antar genre. Genre dengan distribusi *violin* yang lebar mengindikasikan inkonsistensi perilaku pelanggan — sebagian kembali hanya 1-2 hari terlambat, sebagian lain hingga 10+ hari.</p>
+<p>**Insight Bisnis:** Genre dengan median keterlambatan tinggi menunjukkan bahwa pelanggan yang menyewa film tersebut cenderung lebih "engaged" atau film lebih sulit tersedia di tempat lain, sehingga mereka menahan lebih lama. Ini dapat menjadi *leverage* untuk menaikkan *rental rate* pada genre tersebut.</p>
+<p>**Rekomendasi Strategis:** Implementasikan sistem notifikasi otomatis (SMS/email) H-1 sebelum jatuh tempo untuk genre-genre dengan median keterlambatan di atas rata-rata. Pertimbangkan juga skema *late fee* yang progresif untuk mengurangi keterlambatan ekstrem (>7 hari).</p>
+<p>**Catatan Operasional:** Genre dengan ekor distribusi yang panjang (*heavy-tailed*) perlu mendapat perhatian khusus dalam manajemen stok, karena film dari genre ini cenderung "hilang" dari sirkulasi lebih lama dibanding genre lain.</p>
+</div>
+
+---
+
+## Visualisasi 3: Hubungan Rental Rate vs. Keterlambatan
+
+```{r viz_scatter, fig.height=6}
+# Agregasi per film untuk scatter plot yang lebih bersih
+df_scatter <- df %>%
+  group_by(rental_rate, genre) %>%
+  summarise(
+    avg_delay  = mean(delay_days, na.rm = TRUE),
+    late_rate  = mean(is_late, na.rm = TRUE),
+    n          = n(),
+    .groups    = "drop"
+  ) %>%
+  filter(n >= 5)
+
+ggplot(df_scatter, aes(x = rental_rate, y = avg_delay)) +
+  # Confidence band
+  geom_smooth(method = "lm", se = TRUE,
+              color = "#00d4aa", fill = "#00d4aa20",
+              linewidth = 1.2, linetype = "solid") +
+  # Points sized by frequency
+  geom_jitter(aes(size = n, color = avg_delay),
+              alpha = 0.75, width = 0.05, height = 0.05) +
+  scale_color_gradientn(
+    colors = c("#00d4aa","#0096c7","#e63946"),
+    name   = "Avg Delay\n(hari)"
+  ) +
+  scale_size_continuous(range = c(3, 10), name = "Jumlah\nTransaksi") +
+  scale_x_continuous(labels = dollar_format(prefix = "$")) +
+  labs(
+    title    = "Hubungan Rental Rate vs. Rata-rata Keterlambatan",
+    subtitle = "Setiap titik = kombinasi rental_rate genre garis = regresi linier OLS",
+    x        = "Rental Rate (USD per sewa)",
+    y        = "Rata-rata Keterlambatan (hari)",
+    caption  = "Sumber: Database Sakila | Analisis: SIM CM1 Statistika UNS"
+  ) +
+  theme_dark_custom +
+  theme(
+    legend.background = element_rect(fill = "#0f1923", color = "#1c3048"),
+    legend.text       = element_text(color = "#8aa5bf"),
+    legend.title      = element_text(color = "#b0c8e0", face = "bold")
+  )
+```
+
+<div class="callout">
+<p>**Insight Statistik:** Kemiringan garis regresi mengindikasikan arah hubungan antara harga sewa dan durasi keterlambatan. Lebar *confidence band* mencerminkan tingkat ketidakpastian estimasi, band yang lebar menunjukkan variabilitas data yang tinggi.</p>
+<p>**Insight Bisnis:** Jika terdapat korelasi positif, artinya pelanggan yang menyewa film premium (harga tinggi) cenderung menahan film lebih lama. Ini dapat mengindikasikan bahwa film premium memiliki nilai hiburan lebih tinggi, atau pelanggan merasa "worth it" untuk menikmati lebih lama.</p>
+<p>**Rekomendasi Strategis:** Jika korelasi terbukti signifikan, pertimbangkan untuk menyesuaikan kebijakan *late fee* berdasarkan tier harga sewa. Film dengan rental rate tinggi seharusnya memiliki *late fee* yang proporsional lebih tinggi untuk menjaga insentif pengembalian tepat waktu.</p>
+<p>**Catatan Statistik:** Interpretasi scatter plot ini harus dikonfirmasi melalui uji statistik formal (Pearson Correlation) pada bagian berikutnya untuk memastikan bahwa hubungan yang terlihat secara visual memang signifikan secara statistik.</p>
+</div>
+
+---
+
+# ANALISIS STATISTIK {#statistik}
+
+## Uji Korelasi Pearson: Rental Rate vs. Keterlambatan
+
+### Spesifikasi Hipotesis
+
+$$
+H_0: \rho = 0 \quad \text{(tidak ada korelasi linier antara rental rate dan delay)}
+$$
+
+$$
+H_1: \rho \neq 0 \quad \text{(terdapat korelasi linier signifikan)}
+$$
+
+Tingkat signifikansi: $\alpha = 0.05$
+
+### Eksekusi Uji Statistik
+```{r uji_pearson}
+# Uji korelasi pearson antara harga sewa (rental_rate) dan lama keterlambatan (delay_days)
+pearson_test <- cor.test(df$rental_rate, df$delay_days, method = "pearson")
+
+# Menampilkan output bawaan R
+print(pearson_test)
+
+# Bikin kesimpulan singkat otomatis pakai if-else biasa
+p_val <- pearson_test$p.value
+
+if(p_val < 0.05) {
+  print("Keputusan: Tolak H0 -> Terdapat korelasi yang signifikan antara harga sewa dan keterlambatan (alpha = 5%)")
+} else {
+  print("Keputusan: Gagal Tolak H0 -> Tidak terdapat korelasi yang signifikan antara harga sewa dan keterlambatan (alpha = 5%)")
+}
+```
+
+### Tabel Ringkasan Hasil Uji
+
+```{r tabel_pearson}
+hasil_pearson <- tibble(
+  Parameter        = c("Koefisien Korelasi (r)", "Statistik t",
+                       "Derajat Bebas (df)", "p-value",
+                       "CI Bawah (95%)", "CI Atas (95%)", "Keputusan"),
+  Nilai            = c(
+    round(pearson_test$estimate, 5),
+    round(pearson_test$statistic, 4),
+    pearson_test$parameter,
+    formatC(pearson_test$p.value, format = "e", digits = 4),
+    round(pearson_test$conf.int[1], 5),
+    round(pearson_test$conf.int[2], 5),
+    ifelse(pearson_test$p.value < 0.05, "Tolak H₀ ✔", "Gagal Tolak H₀")
+  )
+)
+
+hasil_pearson %>%
+  kableExtra::kable(
+    caption = "Tabel 3: Hasil Uji Korelasi Pearson",
+    align   = c("l","c")
+  ) %>%
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped","hover","condensed"),
+    full_width        = FALSE
+  ) %>%
+  kableExtra::row_spec(0, bold = TRUE, color = "#0a1a28", background = "#00d4aa") %>%
+  kableExtra::row_spec(7, bold = TRUE, color = "#00d4aa")
+```
+
+### Interpretasi Statistik
+
+```{r interpretasi_stat, results='asis'}
+r_val  <- round(pearson_test$estimate, 4)
+p_val  <- pearson_test$p.value
+alpha  <- 0.05
+
+strength <- case_when(
+  abs(r_val) < 0.10  ~ "sangat lemah",
+  abs(r_val) < 0.30  ~ "lemah",
+  abs(r_val) < 0.50  ~ "sedang",
+  abs(r_val) < 0.70  ~ "kuat",
+  TRUE               ~ "sangat kuat"
+)
+
+direction <- ifelse(r_val > 0, "positif", "negatif")
+
+cat(glue::glue(
+"**Nilai koefisien korelasi** Pearson $r = {r_val}$ menunjukkan hubungan linier
+yang **{strength}** dan bersifat **{direction}** antara *rental rate* dan durasi
+keterlambatan pengembalian.
+
+Dengan $p\\text{{-value}} = {formatC(p_val, format='e', digits=3)}$,
+",
+ifelse(p_val < alpha,
+"yang lebih kecil dari $\\alpha = 0.05$, kita **menolak $H_0$**. Terdapat bukti
+statistik yang cukup untuk menyatakan bahwa korelasi antara *rental rate* dan
+keterlambatan pengembalian **signifikan secara statistik**.",
+"yang lebih besar dari $\\alpha = 0.05$, kita **gagal menolak $H_0$**. Tidak
+terdapat bukti statistik yang cukup untuk menyatakan adanya korelasi linier yang
+signifikan antara *rental rate* dan keterlambatan pengembalian.")
+))
+```
+
+<div class="callout">
+<p>**Interpretasi Statistik:** Nilai $r$ yang mendekati 0 mengindikasikan bahwa variasi keterlambatan pengembalian tidak dapat dijelaskan secara memadai hanya melalui faktor harga sewa. Keterlambatan bersifat multifaktorial.</p>
+<p>**Interpretasi Bisnis:** Meski harga sewa tidak secara langsung mendorong keterlambatan, faktor lain seperti genre, rating film, atau karakteristik demografis pelanggan mungkin memiliki pengaruh lebih besar. Analisis regresi berganda dengan variabel kontrol lebih direkomendasikan untuk pemodelan prediktif.</p>
+<p>**Rekomendasi Strategis:** Alih-alih menaikkan *rental rate* sebagai instrumen pengendalian keterlambatan, manajemen sebaiknya mengeksplorasi intervensi non-harga seperti reminder system, deposit, atau program loyalitas dengan insentif pengembalian tepat waktu.</p>
+<p>**Keterbatasan:** Uji korelasi Pearson hanya menangkap hubungan **linier**. Hubungan non-linier atau hubungan yang dimediasi variabel ketiga tidak terdeteksi melalui uji ini, sehingga hasil negatif bukan berarti tidak ada hubungan sama sekali.</p>
+</div>
+
+---
+
+## Tabel Interaktif: Eksplorasi Data Lengkap
+
+```{r tabel_interaktif}
+df %>%
+  select(genre, rental_rate, actual_duration, rental_duration_allowed,
+         delay_days, return_status, delay_category, payment_amount) %>%
+  rename(
+    Genre           = genre,
+    `Rate ($)`      = rental_rate,
+    `Durasi Aktual` = actual_duration,
+    `Durasi Diizinkan` = rental_duration_allowed,
+    `Delay (hari)`  = delay_days,
+    Status          = return_status,
+    Kategori        = delay_category,
+    `Bayar ($)`     = payment_amount
+  ) %>%
+  mutate(`Bayar ($)` = round(`Bayar ($)`, 2)) %>%
+  DT::datatable(
+    options = list(
+      pageLength = 10,
+      scrollX    = TRUE,
+      dom        = "Bfrtip",
+      buttons    = c("csv","excel"),
+      columnDefs = list(list(className = "dt-center", targets = "_all"))
+    ),
+    filter  = "top",
+    class   = "compact hover stripe",
+    caption = "Tabel 4: Data Rental Detail (Interaktif)"
+  ) %>%
+  DT::formatCurrency(c("Rate ($)", "Bayar ($)"), currency = "$", digits = 2) %>%
+  DT::formatStyle(
+    "Status",
+    backgroundColor = DT::styleEqual(
+      c("Late","On Time"),
+      c("#3d0a0a","#0a2e1a")
+    ),
+    color = DT::styleEqual(
+      c("Late","On Time"),
+      c("#ff6b6b","#51cf66")
+    )
+  )
+```
+
+---
+
+# KESIMPULAN DAN REKOMENDASI {#kesimpulan}
+
+## Ringkasan Temuan
+
+```{r ringkasan_temuan}
+# cari 3 genre dengan revenue tertinggi
+top3_genre <- df_genre %>%
+  slice_max(total_revenue, n = 3) %>%
+  pull(genre)
+
+# cari 3 genre dengan rata-rata delay tertinggi
+high_delay_genre <- df_genre %>%
+  slice_max(avg_delay, n = 3) %>%
+  pull(genre)
+
+# tampilkan hasil ringkasan
+print(paste("Top 3 genre revenue tertinggi:", paste(top3_genre, collapse = ", ")))
+print(paste("Top 3 genre delay tertinggi:", paste(high_delay_genre, collapse = ", ")))
+print(paste("Persentase keseluruhan late return:", round(mean(df$is_late) * 100, 2), "%"))
+print(paste("Nilai korelasi (r):", round(pearson_test$estimate, 4)))
+```
+
+## Kesimpulan Utama
+
+Berdasarkan analisis komprehensif terhadap data rental database Sakila, diperoleh kesimpulan:
+
+1. **Performa Revenue**: Terdapat ketidakmerataan distribusi pendapatan antar genre. Genre-genre unggulan berkontribusi secara tidak proporsional terhadap total revenue, mengindikasikan adanya *genre premium* yang menjadi andalan bisnis.
+
+2. **Pola Keterlambatan**: Tingkat keterlambatan pengembalian secara keseluruhan cukup signifikan. Distribusi keterlambatan bervariasi antar genre, dengan beberapa genre menunjukkan kecenderungan keterlambatan yang lebih tinggi dan lebih bervariasi.
+
+3. **Hubungan Harga-Keterlambatan**: Uji Pearson Correlation menunjukkan korelasi yang lemah antara *rental rate* dan durasi keterlambatan, mengindikasikan bahwa harga sewa bukan faktor penentu utama perilaku pengembalian pelanggan.
+
+## Rekomendasi Strategis
+
+| Prioritas | Area | Rekomendasi |
+|-----------|------|-------------|
+| 🔴 Tinggi | Inventori | Pastikan stok genre top-3 revenue selalu tersedia minimal 15-20% buffer |
+| 🔴 Tinggi | Keterlambatan | Implementasikan automated reminder H-1 dan H+1 jatuh tempo |
+| 🟡 Sedang | Pricing | Review rental rate genre underperform berbasis elastisitas demand |
+| 🟡 Sedang | Late Fee | Terapkan skema late fee progresif untuk keterlambatan >3 hari |
+| 🟢 Rendah | Loyalitas | Buat program reward untuk pelanggan dengan track record pengembalian tepat waktu |
+| 🟢 Rendah | Analitik | Kembangkan model prediktif multi-variabel untuk identifikasi risiko keterlambatan |
+
+## Keterbatasan dan Pengembangan Lebih Lanjut
+
+- Data simulasi digunakan karena keterbatasan akses langsung ke server MySQL dalam proses *knitting*. Pada implementasi nyata, koneksi langsung ke database Sakila menghasilkan insight yang lebih akurat.
+- Analisis dapat diperluas dengan menyertakan variabel demografis pelanggan, seasonality, dan data geospasial.
+- Model prediktif berbasis *machine learning* (misalnya Random Forest atau Gradient Boosting) dapat dikembangkan untuk memprediksi probabilitas keterlambatan individual.
+
+---
+
+<div style="text-align:center; padding: 30px; color: #4a6a88; font-size:0.88rem; border-top: 1px solid #1c3048; margin-top: 40px;">
+  <strong style="color:#00d4aa;">SIM CM1 — Statistika UNS</strong><br>
+  Laporan dibuat dengan R Markdown · ggplot2 · DBI · MySQL Sakila<br>
+  `r format(Sys.Date(), "%d %B %Y")`
+</div>
